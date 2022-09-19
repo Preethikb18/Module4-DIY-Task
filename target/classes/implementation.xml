@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="getAccounts" doc:id="f69d6c86-faf9-49dc-a62a-7cec9a27f457" >
+		<db:select doc:name="Select" doc:id="a75c6988-d184-421c-a656-421e7e5a17d6" config-ref="Database_Config">
+					<db:sql><![CDATA[SELECT * from flights_customers]]></db:sql>
+				</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="40437735-b5fc-414e-82e8-7bd22e2bce94" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	ID: payload01.accountID as Number default 0,
+	firstName: payload01.name default "",
+	lastName: payload01.name default "",
+	address: (payload01.city default "") ++ (payload01.state default ""),
+	postal: payload01.postal default "",
+	country: payload01.country default "",
+	miles: payload01.miles default 0,
+	creationDate: payload01.creationDate as String default "",
+	accType: payload01.accountType default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getAccountsByID" doc:id="560ca403-b117-4c7e-a19c-8488031b28ad" >
+		<db:select doc:name="Select" doc:id="a264ca1d-f516-4870-a298-4f22ab9faf2b" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * from flights_customers Where AccountID = :aid]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{'aid': attributes.uriParams.ID}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="9289be89-26d5-4cf7-8498-efa2399d9d27" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	ID: payload01.accountID as Number default 0,
+	firstName: payload01.name default "",
+	lastName: payload01.name default "",
+	address: ((payload01.street default "") ++ (payload01.city default "")) ++ (payload01.state default ""),
+	postal: payload01.postal default "",
+	country: payload01.country default "",
+	miles: payload01.miles default 0,
+	creationDate: payload01.creationDate as String default "",
+	accType: payload01.accountType default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
